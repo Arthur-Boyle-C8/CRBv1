@@ -1,0 +1,82 @@
+version: "3.8"
+
+services:
+  prometheus:
+    image: prom/prometheus:2.47.0
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/rules:/etc/prometheus/rules:ro
+    ports:
+      - "9090:9090"
+
+  grafana:
+    image: grafana/grafana:9.5.0
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+      - loki
+
+  loki:
+    image: grafana/loki:2.8.2
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./loki/local-config.yaml:/etc/loki/local-config.yaml:ro
+    ports:
+      - "3100:3100"
+
+  promtail:
+    image: grafana/promtail:2.8.2
+    volumes:
+      - /var/log:/var/log:ro
+      - ./apps/log-generator/logs:/var/log/crb:ro
+      - ./promtail/promtail-config.yml:/etc/promtail/promtail-config.yml:ro
+    command: -config.file=/etc/promtail/promtail-config.yml
+    depends_on:
+      - loki
+
+  log-generator:
+    build: ./apps/log-generator
+    volumes:
+      - ./apps/log-generator/logs:/app/logs
+    ports:
+      - "8000:8000"
+    environment:
+      - FLASK_ENV=production
+
+  suricata:
+    image: jasonish/suricata:6.0.6
+    # Note: For Suricata to inspect host traffic you generally need network_mode: "host"
+    # and appropriate capabilities. Running in host mode is not safe inside some CI runners.
+    # For MVP we'll run it in default bridge mode; to enable host capture update to:
+    # network_mode: "host"
+    # cap_add: ["NET_RAW", "NET_ADMIN"]
+    volumes:
+      - ./suricata/suricata.yaml:/etc/suricata/suricata.yaml:ro
+      - ./suricata/rules:/etc/suricata/rules:ro
+    command: -c /etc/suricata/suricata.yaml -S /etc/suricata/rules/local.rules
+
+# Optional, commented guidance for Wazuh/ELK (heavy, commented out)
+#  elasticsearch:
+#    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.13
+#    environment:
+#      - discovery.type=single-node
+#    volumes:
+#      - esdata:/usr/share/elasticsearch/data
+#    ports:
+#      - "9200:9200"
+#
+#  wazuh:
+#    image: wazuh/wazuh:4.4.10
+#    depends_on:
+#      - elasticsearch
+
+volumes:
+  # esdata: {}
+  # Add named volumes if you enable Elasticsearch
