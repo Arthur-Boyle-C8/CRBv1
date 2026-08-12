@@ -1,6 +1,4 @@
-# CRB — Control, Respect, Backdoor (MVP)
-
-CRB is an observability / security telemetry MVP combining:
+# CRB is an observability / security telemetry MVP combining:
 - Prometheus (metrics)
 - Grafana (dashboards & alerting)
 - Loki + Promtail (log aggregation)
