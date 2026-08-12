@@ -1,0 +1,2 @@
+# Example rule: detect HTTP login attempts to /login
+alert http any any -> any any (msg:"CRB Login attempt"; http_uri; content:"/login"; sid:1000001; rev:1;)
