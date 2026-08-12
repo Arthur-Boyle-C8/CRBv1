@@ -1,0 +1,19 @@
+{
+  "title": "CRB Overview",
+  "panels": [
+    {
+      "type": "graph",
+      "title": "HTTP request rate",
+      "targets": [{"expr": "rate(http_requests_total[1m])", "refId": "A"}],
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+    },
+    {
+      "type": "logs",
+      "title": "App logs (Loki)",
+      "targets": [{"expr": "{job=\"log-generator\"}", "refId": "B"}],
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+    }
+  ],
+  "schemaVersion": 16,
+  "version": 1
+}
